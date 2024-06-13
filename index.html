@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ api_name }}</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>{{ api_name }}</h1>
+    <div class="container">
+        <h2>Employees:</h2>
+        <ul id="employee-list">
+            {% for employee in employees %}
+                <li id="employee-{{ employee.id }}">
+                    ID: {{ employee.id }}, Name: {{ employee.name }}
+                    <form class="edit-form" data-id="{{ employee.id }}" style="display: inline;">
+                        <input type="text" name="new_name" placeholder="New Name">
+                        <button type="submit">Edit</button>
+                    </form>
+                    <button class="delete-button" data-id="{{ employee.id }}">Delete</button>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="container">
+        <h2>Add Employee:</h2>
+        <form id="add-form">
+            <input type="text" name="id" placeholder="ID">
+            <input type="text" name="name" placeholder="Name">
+            <button type="submit">Add</button>
+        </form>
+    </div>
+    <div class="container">
+        <h2>Search:</h2>
+        <form id="search-form">
+            <input type="text" name="query" placeholder="Search by name or ID">
+            <button type="submit">Search</button>
+        </form>
+        <ul id="search-results"></ul>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('.edit-form').on('submit', function(e) {
+                e.preventDefault();
+                const id = $(this).data('id');
+                const newName = $(this).find('input[name="new_name"]').val();
+
+                $.ajax({
+                    url: '/edit',
+                    method: 'POST',
+                    data: { id: id, new_name: newName },
+                    success: function(response) {
+                        alert('Employee updated successfully');
+                        location.reload();
+                    },
+                    error: function(response) {
+                        alert(response.responseJSON.error);
+                    }
+                });
+            });
+
+            $('.delete-button').on('click', function() {
+                const id = $(this).data('id');
+
+                $.ajax({
+                    url: '/delete',
+                    method: 'POST',
+                    data: { id: id },
+                    success: function(response) {
+                        alert('Employee deleted successfully');
+                        location.reload();
+                    },
+                    error: function(response) {
+                        alert(response.responseJSON.error);
+                    }
+                });
+            });
+
+            $('#add-form').on('submit', function(e) {
+                e.preventDefault();
+                const id = $(this).find('input[name="id"]').val();
+                const name = $(this).find('input[name="name"]').val();
+
+                $.ajax({
+                    url: '/add',
+                    method: 'POST',
+                    data: { id: id, name: name },
+                    success: function(response) {
+                        alert('Employee added successfully');
+                        location.reload();
+                    },
+                    error: function(response) {
+                        alert(response.responseJSON.error);
+                    }
+                });
+            });
+
+            $('#search-form').on('submit', function(e) {
+                e.preventDefault();
+                const query = $(this).find('input[name="query"]').val();
+
+                $.ajax({
+                    url: '/search',
+                    method: 'GET',
+                    data: { query: query },
+                    success: function(response) {
+                        const results = response.map(emp => `<li>ID: ${emp.id}, Name: ${emp.name}</li>`);
+                        $('#search-results').html(results.join(''));
+                    },
+                    error: function(response) {
+                        alert(response.responseJSON.error);
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
